@@ -1,6 +1,7 @@
 Vagrant.configure("2") do |config|
-    config.vm.define "rhel8" do |rhel7|
-        rhel7.vm.box = "generic/rhel8"
+    # Ansible control server:
+    config.vm.define "acs" do |acs|
+        acs.vm.box = "generic/rhel8"
 
         rh_user = ENV['RH_USER']
         rh_pass = ENV['RH_PASS']
@@ -11,16 +12,24 @@ Vagrant.configure("2") do |config|
         end
 
         # Provision script to register this VM with the RHEL subscription.
-        rhel7.vm.provision "shell" do |shell|
+        acs.vm.provision "shell" do |shell|
             shell.inline = <<-SHELL
-                echo 'Registering the system to Red Hat Subscription Management'
+                set -euxo pipefail
+
+                echo "Registering the VM to Red Hat Subscription Management..."
                 subscription-manager register --username #{rh_user} --password #{rh_pass} --auto-attach
+
+                echo "Fixing missing nl language"
+                yum install -y glibc-langpack-nl
+
+                echo "Installing Ansible..."
+                yum install -y ansible
             SHELL
         end
 
         # Use the trigger feature to deregister when destroying the VM.
-        rhel7.trigger.before :destroy do |trigger|
-            trigger.name = "Deregistering RHEL"
+        acs.trigger.before :destroy do |trigger|
+            trigger.name = "Deregistering VM..."
             trigger.run = { inline: "vagrant ssh -c 'sudo subscription-manager unregister'" }
         end
     end
