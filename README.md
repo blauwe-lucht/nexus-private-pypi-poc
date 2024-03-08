@@ -32,6 +32,11 @@ cd /vagrant
 ansible-playbook playbook-nexus.yml
 ```
 
+On the nexus VM, copy the contents of /opt/sonatype-work/nexus3/admin.password.
+Point your browser at the [Nexus Repository Manager](http://192.168.14.34:8081), click 'Sign in' in the top right corner
+and log in with 'admin' and the
+password you just copied. Walk through the installation wizard.
+
 ### Teardown
 
 On the machine where this repo was cloned:
