@@ -27,10 +27,14 @@ Vagrant.configure("2") do |config|
             SHELL
         end
 
+        # Make sure all sensitive info is only readable by user.
+        acs.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=700,fmode=600"]
+
         # Use the trigger feature to deregister when destroying the VM.
         acs.trigger.before :destroy do |trigger|
             trigger.name = "Deregistering VM..."
             trigger.run = { inline: "vagrant ssh -c 'sudo subscription-manager unregister'" }
         end
-    end
+
+   end
 end
