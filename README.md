@@ -1,5 +1,11 @@
 # Ansible Nexus yum PoC
 
+This PoC shows:
+
+- how to build a Nexus server using Ansible
+- how to build a yum package and upload it to Nexus
+- how to install that package using Ansible
+
 ## Requirements
 
 - [VirtualBox](https://www.virtualbox.org/): tested with version 6.1.50
