@@ -18,18 +18,26 @@ This PoC shows:
 
 Set the environment variables RH_USER and RH_PASS to the credentials of your Red Hat login.
 
-### Create the VM
+### Setup
 
 ``` bash
 vagrant up
 ```
 
-The registered VM can be seen in the [Systems page](https://access.redhat.com/management/systems) of your Customer Portal.
+The registered VMs can be seen in the [Systems page](https://access.redhat.com/management/systems) of your Customer Portal.
 
-### Destroy the VM
+``` bash
+vagrant ssh acs
+cd /vagrant
+ansible-playbook playbook-nexus.yml
+```
+
+### Teardown
+
+On the machine where this repo was cloned:
 
 ``` bash
 vagrant destroy -f
 ```
 
-The VM will be automatically unregistered.
+The VMs will be automatically unregistered.

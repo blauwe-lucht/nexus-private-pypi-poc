@@ -1,0 +1,91 @@
+---
+- name: Configure Nexus server
+  hosts: nexus
+  vars:
+    ansible_become: true
+    nexus_version: "3.66.0-02"
+    download_link: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-unix.tar.gz"
+    download_dest: /root/nexus.tar.gz
+    nexus_user: nexus
+  gather_facts: false
+  tasks:
+    - name: Install Java
+      ansible.builtin.yum:
+        name: java-1.8.0-openjdk
+        state: present
+
+    - name: Add user nexus
+      ansible.builtin.user:
+        name: "{{ nexus_user }}"
+        state: present
+
+    - name: Download Nexus
+      ansible.builtin.get_url:
+        url: "{{ download_link }}"
+        dest: "{{ download_dest }}"
+        mode: "0644"
+
+    - name: Extract Nexus download
+      ansible.builtin.unarchive:
+        src: "{{ download_dest }}"
+        remote_src: true
+        dest: /opt
+        mode: "0755"
+        owner: "{{ nexus_user }}"
+        group: "{{ nexus_user }}"
+        creates: /opt/nexus-{{ nexus_version }}/bin/nexus
+
+    - name: Set correct ownership for all files and directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: nexus
+        group: nexus
+        recurse: true
+      loop:
+        - /opt/nexus-{{ nexus_version }}
+        - /opt/sonatype-work
+
+    - name: Generate correct nexus.rc
+      ansible.builtin.copy:
+        dest: /opt/nexus-{{ nexus_version }}/bin/nexus.rc
+        content: 'run_as_user="{{ nexus_user }}"'
+        mode: "0644"
+        owner: "{{ nexus_user }}"
+        group: "{{ nexus_user }}"
+
+    - name: Generate service file
+      ansible.builtin.template:
+        src: etc/systemd/system/nexus.service.j2
+        dest: /etc/systemd/system/nexus.service
+        mode: "0644"
+      notify: Restart nexus
+
+    - name: Enable and start nexus service
+      ansible.builtin.service:
+        name: nexus
+        enabled: true
+        state: started
+
+    - name: Open up port 8081 from the outside
+      ansible.posix.firewalld:
+        port: 8081/tcp
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Check if Nexus Repository Manager is accessible (this can take a couple of minutes)
+      ansible.builtin.uri:
+        url: http://{{ ansible_host }}:8081
+        return_content: false
+      delegate_to: localhost
+      register: nexus_response
+      until: nexus_response.status == 200
+      retries: 20
+      delay: 5
+      tags: health_check
+
+  handlers:
+    - name: Restart nexus
+      ansible.builtin.service:
+        name: nexus
+        state: restarted
