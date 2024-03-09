@@ -29,8 +29,8 @@ Vagrant.configure("2") do |config|
                 python3.11 -m ensurepip
                 # jmespath is needed by role ansible-ThoTeam.nexus3-oss:
                 python3.11 -m pip install jmespath
-                ansible-galaxy role install geerlingguy.java
-                ansible-galaxy role install ansible-ThoTeam.nexus3-oss
+                su -l vagrant -c "ansible-galaxy role install geerlingguy.java"
+                su -l vagrant -c "ansible-galaxy role install ansible-ThoTeam.nexus3-oss"
             SHELL
         end
 
