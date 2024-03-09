@@ -25,6 +25,12 @@ Vagrant.configure("2") do |config|
 
                 echo "Installing Ansible..."
                 yum install -y ansible
+                # NOTE: this will break once ansible will install a newer version of python3.
+                python3.11 -m ensurepip
+                # jmespath is needed by role ansible-ThoTeam.nexus3-oss:
+                python3.11 -m pip install jmespath
+                ansible-galaxy role install geerlingguy.java
+                ansible-galaxy role install ansible-ThoTeam.nexus3-oss
             SHELL
         end
 

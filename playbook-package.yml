@@ -9,7 +9,7 @@
   gather_facts: false
   vars:
     version: "0.1"
-    nexus_user: upload
+    nexus_user: upload-yum
     nexus_password: Abcd1234!
     nexus_server: 192.168.14.34
   tasks:

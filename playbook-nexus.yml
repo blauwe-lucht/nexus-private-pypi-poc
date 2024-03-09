@@ -3,75 +3,47 @@
   hosts: nexus
   vars:
     ansible_become: true
-    nexus_version: "3.66.0-02"
-    download_link: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-unix.tar.gz"
-    download_dest: /root/nexus.tar.gz
-    nexus_user: nexus
-  gather_facts: false
+  roles:
+    - role: geerlingguy.java
+      vars:
+        java_packages:
+          - java-1.8.0-openjdk
+
+    - role: ansible-ThoTeam.nexus3-oss
+      vars:
+        # This is the work directory used by the non-OSS version:
+        nexus_data_dir: /opt/sonatype-work
+        # For a PoC this is ok, but normally you'd encrypt this:
+        nexus_admin_password: Abcd1234!
+        nexus_anonymous_access: true
+        nexus_repos_yum_hosted:
+          - name: yum
+        nexus_roles:
+          - id: upload-yum
+            name: upload-yum
+            description: Uploader to yum repository
+            privileges:
+              - nx-repository-view-yum-yum-add
+              - nx-repository-view-yum-yum-edit
+        nexus_local_users:
+          - username: upload-yum
+            password: Abcd1234!
+            first_name: upload
+            last_name: yum
+            email: nobody@example.com
+            roles:
+              - upload-yum
+            state: present
+        nexus_config_yum: true
+
   tasks:
-    - name: Install Java
-      ansible.builtin.yum:
-        name: java-1.8.0-openjdk
-        state: present
-
-    - name: Add user nexus
-      ansible.builtin.user:
-        name: "{{ nexus_user }}"
-        state: present
-
-    - name: Download Nexus
-      ansible.builtin.get_url:
-        url: "{{ download_link }}"
-        dest: "{{ download_dest }}"
-        mode: "0644"
-
-    - name: Extract Nexus download
-      ansible.builtin.unarchive:
-        src: "{{ download_dest }}"
-        remote_src: true
-        dest: /opt
-        mode: "0755"
-        owner: "{{ nexus_user }}"
-        group: "{{ nexus_user }}"
-        creates: /opt/nexus-{{ nexus_version }}/bin/nexus
-
-    - name: Set correct ownership for all files and directories
-      ansible.builtin.file:
-        path: "{{ item }}"
-        owner: nexus
-        group: nexus
-        recurse: true
-      loop:
-        - /opt/nexus-{{ nexus_version }}
-        - /opt/sonatype-work
-
-    - name: Generate correct nexus.rc
-      ansible.builtin.copy:
-        dest: /opt/nexus-{{ nexus_version }}/bin/nexus.rc
-        content: 'run_as_user="{{ nexus_user }}"'
-        mode: "0644"
-        owner: "{{ nexus_user }}"
-        group: "{{ nexus_user }}"
-
-    - name: Generate service file
-      ansible.builtin.template:
-        src: etc/systemd/system/nexus.service.j2
-        dest: /etc/systemd/system/nexus.service
-        mode: "0644"
-      notify: Restart nexus
-
-    - name: Enable and start nexus service
-      ansible.builtin.service:
-        name: nexus
-        enabled: true
-        state: started
-
     - name: Open up port 8081 from the outside
       ansible.posix.firewalld:
         port: 8081/tcp
         permanent: true
         state: enabled
         immediate: true
+      tags: firewall
 
     - name: Check if Nexus Repository Manager is accessible (this can take a couple of minutes)
       ansible.builtin.uri:
@@ -83,23 +55,3 @@
       retries: 20
       delay: 5
       tags: health_check
-
-    - name: Read initial admin password
-      ansible.builtin.slurp:
-        path: /opt/sonatype-work/nexus3/admin.password
-      register: slurp_result
-      tags: password
-
-    - name: Show initial admin password
-      ansible.builtin.debug:
-        msg: |
-          Visit http://{{ ansible_host }}:8081 and login with:
-          - user name: admin
-          - password: {{ slurp_result.content | b64decode }}
-      tags: password
-
-  handlers:
-    - name: Restart nexus
-      ansible.builtin.service:
-        name: nexus
-        state: restarted
