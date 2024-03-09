@@ -19,7 +19,7 @@
         src: /opt/poc/hello.txt
       register: slurp_result
 
-    - name: Assert hello.txt contain the right content
+    - name: Assert hello.txt contains the right content
       ansible.builtin.assert:
         that: slurp_result.content | b64decode == 'hello 0.1'
 
@@ -28,6 +28,6 @@
         src: /opt/poc/world.txt
       register: slurp_result
 
-    - name: Assert world.txt contain the right content
+    - name: Assert world.txt contains the right content
       ansible.builtin.assert:
         that: slurp_result.content | b64decode == 'world 0.1'
