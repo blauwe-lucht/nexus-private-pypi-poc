@@ -1,0 +1,33 @@
+---
+- name: Install poc-package from Nexus
+  hosts: nexus
+  vars:
+    ansible_become: true
+    poc_package_version: "0.1"
+    nexus_server: "{{ ansible_host }}"
+  gather_facts: false
+  tasks:
+    - name: Install poc-package
+      ansible.builtin.yum:
+        name: http://{{ nexus_server }}:8081/repository/yum/poc-package-{{ poc_package_version }}-1.el8.x86_64.rpm
+        # Since this is a PoC we're keeping it simple so the package is not signed:
+        disable_gpg_check: true
+        state: present
+
+    - name: Read hello.txt
+      ansible.builtin.slurp:
+        src: /opt/poc/hello.txt
+      register: slurp_result
+
+    - name: Assert hello.txt contain the right content
+      ansible.builtin.assert:
+        that: slurp_result.content | b64decode == 'hello 0.1'
+
+    - name: Read world.txt
+      ansible.builtin.slurp:
+        src: /opt/poc/world.txt
+      register: slurp_result
+
+    - name: Assert world.txt contain the right content
+      ansible.builtin.assert:
+        that: slurp_result.content | b64decode == 'world 0.1'
