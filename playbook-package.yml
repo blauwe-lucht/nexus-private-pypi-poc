@@ -1,0 +1,83 @@
+---
+# Normally you would use a proper build system like make or maven to build and upload your package,
+# but since we've already got Ansible installed, let's use that. :)
+# "If the only tool you have is a hammer, it is tempting to treat everything as if it were a nail." - Abraham Maslow
+
+- name: Create and upload yum package
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    version: "0.1"
+    nexus_user: upload
+    nexus_password: Abcd1234!
+    nexus_server: 192.168.14.34
+  tasks:
+    - name: Install required packages
+      ansible.builtin.yum:
+        name:
+          - rpm-build
+          - createrepo
+          - rpmlint
+        state: present
+      become: true
+      tags: install
+
+    - name: Make directory for package
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: "0755"
+        state: directory
+      loop:
+        - ~/rpmbuild
+        - ~/rpmbuild/BUILD
+        - ~/rpmbuild/RPMS
+        - ~/rpmbuild/SOURCES
+        - ~/rpmbuild/SPECS
+        - ~/rpmbuild/SRPMS
+        - ~/rpmbuild-src
+        - ~/rpmbuild-src/poc-package-{{ version }}
+
+    - name: Create source files
+      ansible.builtin.copy:
+        dest: ~/rpmbuild-src/poc-package-{{ version }}/{{ item.filename }}
+        content: "{{ item.content }}"
+        mode: "0644"
+      loop:
+        - filename: hello.txt
+          content: hello {{ version }}
+        - filename: world.txt
+          content: world {{ version }}
+
+    - name: Create tar.gz file from sources
+      community.general.archive:
+        path: ~/rpmbuild-src/poc-package-{{ version }}
+        dest: ~/rpmbuild/SOURCES/poc-package-{{ version }}.tar.gz
+        mode: "0644"
+
+    - name: Generate the spec file
+      ansible.builtin.template:
+        src: rpmbuild/SPECS/poc-package.spec.j2
+        dest: ~/rpmbuild/SPECS/poc-package.spec
+        mode: "0644"
+
+    - name: Lint the spec file
+      ansible.builtin.command:
+        cmd: rpmlint ~/rpmbuild/SPECS/poc-package.spec
+      changed_when: false
+
+    - name: Run rpmbuild
+      ansible.builtin.command:
+        cmd: rpmbuild -ba poc-package.spec
+        chdir: ~/rpmbuild/SPECS
+      changed_when: true
+      tags: rpmbuild
+
+    - name: Upload to nexus  # noqa command-instead-of-module : couldn't get this to work with uri
+      ansible.builtin.command:
+        cmd: >
+          curl -v -u {{ nexus_user }}:{{ nexus_password }}
+          --upload-file /home/vagrant/rpmbuild/RPMS/x86_64/poc-package-{{ version }}-1.el8.x86_64.rpm
+          http://{{ nexus_server }}:8081/repository/yum/poc-package-{{ version }}-1.el8.x86_64.rpm
+      changed_when: true
+      tags: upload

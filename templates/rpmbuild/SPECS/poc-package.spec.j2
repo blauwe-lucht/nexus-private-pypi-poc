@@ -1,0 +1,33 @@
+Name:           poc-package
+Version:        {{ version}}
+Release:        1%{?dist}
+Summary:        A brief description of your package
+
+License:        Your license
+URL:            http://example.com
+Source0:        %{name}-%{version}.tar.gz
+
+ExclusiveArch:  x86_64
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+
+%description
+A longer description of your package.
+
+%global debug_package %{nil}
+
+%prep
+%setup -q
+
+%build
+
+%install
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/opt/poc
+cp -a * $RPM_BUILD_ROOT/opt/poc
+
+%files
+/opt/poc/hello.txt
+/opt/poc/world.txt
+
+%clean
+rm -rf $RPM_BUILD_ROOT
