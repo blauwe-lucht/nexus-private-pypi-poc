@@ -84,6 +84,20 @@
       delay: 5
       tags: health_check
 
+    - name: Read initial admin password
+      ansible.builtin.slurp:
+        path: /opt/sonatype-work/nexus3/admin.password
+      register: slurp_result
+      tags: password
+
+    - name: Show initial admin password
+      ansible.builtin.debug:
+        msg: |
+          Visit http://{{ ansible_host }}:8081 and login with:
+          - user name: admin
+          - password: {{ slurp_result.content | b64decode }}
+      tags: password
+
   handlers:
     - name: Restart nexus
       ansible.builtin.service:

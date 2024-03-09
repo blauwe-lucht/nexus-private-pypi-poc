@@ -32,10 +32,10 @@ cd /vagrant
 ansible-playbook playbook-nexus.yml
 ```
 
-On the nexus VM, copy the contents of /opt/sonatype-work/nexus3/admin.password.
 Point your browser at the [Nexus Repository Manager](http://192.168.14.34:8081), click 'Sign in' in the top right corner
 and log in with 'admin' and the
-password you just copied. Walk through the installation wizard.
+password shown in the output of the ansible-playbook command.
+Walk through the installation wizard.
 Go to server administration (the cog symbol at the top).
 Create a yum repository called 'yum'.
 Create a role with privileges 'nx-repository-view-yum-yum-add' and 'nx-repository-view-yum-yum-edit'.
