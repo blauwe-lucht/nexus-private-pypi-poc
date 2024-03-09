@@ -32,22 +32,14 @@ cd /vagrant
 ansible-playbook playbook-nexus.yml
 ```
 
-Point your browser at the [Nexus Repository Manager](http://192.168.14.34:8081), click 'Sign in' in the top right corner
-and log in with 'admin' and the
-password shown in the output of the ansible-playbook command.
-Walk through the installation wizard.
-Go to server administration (the cog symbol at the top).
-Create a yum repository called 'yum'.
-Create a role with privileges 'nx-repository-view-yum-yum-add' and 'nx-repository-view-yum-yum-edit'.
-Create a user 'upload' with password 'Abcd1234!' and the role that was just created.
-
 To build and upload the RPM, on the acs run:
 
 ``` bash
 ansible-playbook playbook-package.yml
 ```
 
-When this is successful you can see the package in Nexus (click on box icon and select 'browse').
+When this is successful you can see the package in Nexus: point your browser at the [Nexus Repository Manager](http://192.168.14.34:8081) and
+login with admin/Abcd1234!.
 
 The package can be installed on the nexus VM by running on the acs:
 
