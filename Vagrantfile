@@ -10,6 +10,7 @@ Vagrant.configure("2") do |config|
     # Ansible control server:
     config.vm.define "acs" do |acs|
         acs.vm.box = "generic/rhel8"
+        acs.vm.hostname = "acs"
 
         # Provision script to register this VM with the RHEL subscription.
         acs.vm.provision "shell" do |shell|
@@ -41,13 +42,14 @@ Vagrant.configure("2") do |config|
     # Nexus server:
     config.vm.define "nexus" do |nexus|
         nexus.vm.box = "generic/rhel8"
+        nexus.vm.hostname = "nexus"
 
         nexus.vm.network "private_network", ip: "192.168.14.34"
 
         # Provision script to register this VM with the RHEL subscription.
         nexus.vm.provision "shell" do |shell|
             shell.inline = <<-SHELL
-                set -euxo pipefail
+                set -euo pipefail
 
                 echo "Registering the VM to Red Hat Subscription Management..."
                 subscription-manager register --username #{rh_user} --password #{rh_pass} --auto-attach
