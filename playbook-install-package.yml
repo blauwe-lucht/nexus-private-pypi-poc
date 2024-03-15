@@ -15,9 +15,20 @@
         username: download-yum
         password: Abcd1234!
 
+    - name: Copy GPG public key
+      ansible.builtin.copy:
+        src: /home/vagrant/.gnupg/ansible.pub
+        dest: /root/ansible.pub
+        mode: "0644"
+
+    - name: Import GPG public key in rpm
+      ansible.builtin.rpm_key:
+        key: /root/ansible.pub
+
     - name: Install poc-package
       ansible.builtin.yum:
         name: poc-package
+        update_cache: true
         state: present
 
     - name: Read hello.txt
