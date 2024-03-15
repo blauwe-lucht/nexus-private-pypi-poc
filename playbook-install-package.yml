@@ -7,11 +7,17 @@
     nexus_server: "{{ ansible_host }}"
   gather_facts: false
   tasks:
+    - name: Configure yum Nexus repo
+      ansible.builtin.yum_repository:
+        name: nexus
+        description: Nexus YUM repo
+        baseurl: http://192.168.14.34:8081/repository/yum/
+        username: download-yum
+        password: Abcd1234!
+
     - name: Install poc-package
       ansible.builtin.yum:
-        name: http://{{ nexus_server }}:8081/repository/yum/poc-package-{{ poc_package_version }}-1.el8.x86_64.rpm
-        # Since this is a PoC we're keeping it simple so the package is not signed:
-        disable_gpg_check: true
+        name: poc-package
         state: present
 
     - name: Read hello.txt

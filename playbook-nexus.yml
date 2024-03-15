@@ -16,6 +16,7 @@
         # For a PoC this is ok, but normally you'd encrypt this:
         nexus_admin_password: Abcd1234!
         nexus_anonymous_access: false
+        nexus_config_yum: true
         nexus_repos_yum_hosted:
           - name: yum
         nexus_roles:
@@ -25,6 +26,11 @@
             privileges:
               - nx-repository-view-yum-yum-add
               - nx-repository-view-yum-yum-edit
+          - id: download-yum
+            name: download-yum
+            description: Downloader of yum repository
+            privileges:
+              - nx-repository-view-yum-yum-read
         nexus_local_users:
           - username: upload-yum
             password: Abcd1234!
@@ -34,7 +40,14 @@
             roles:
               - upload-yum
             state: present
-        nexus_config_yum: true
+          - username: download-yum
+            password: Abcd1234!
+            first_name: download
+            last_name: yum
+            email: nobody@example.com
+            roles:
+              - download-yum
+            state: present
 
   tasks:
     - name: Open up port 8081 from the outside
