@@ -15,7 +15,7 @@
         nexus_data_dir: /opt/sonatype-work
         # For a PoC this is ok, but normally you'd encrypt this:
         nexus_admin_password: Abcd1234!
-        nexus_anonymous_access: true
+        nexus_anonymous_access: false
         nexus_repos_yum_hosted:
           - name: yum
         nexus_roles:
@@ -54,4 +54,5 @@
       until: nexus_response.status == 200
       retries: 20
       delay: 5
+      check_mode: false
       tags: health_check
