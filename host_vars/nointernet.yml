@@ -1,0 +1,3 @@
+---
+ansible_host: "192.168.7.34"
+ansible_ssh_private_key_file: .vagrant/machines/nointernet/virtualbox/private_key

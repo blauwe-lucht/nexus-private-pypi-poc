@@ -3,6 +3,12 @@
   hosts: nexus
   vars:
     ansible_become: true
+
+  pre_tasks:
+    - name: Install policycoreutils-python-utils, needed by ansible-ThoTeam.nexus3-oss
+      ansible.builtin.yum:
+        name: policycoreutils-python-utils
+
   roles:
     - role: geerlingguy.java
       vars:
@@ -16,37 +22,37 @@
         # For a PoC this is ok, but normally you'd encrypt this:
         nexus_admin_password: Abcd1234!
         nexus_anonymous_access: false
-        nexus_config_yum: true
-        nexus_repos_yum_hosted:
-          - name: yum
+        nexus_config_pypi: true
+        nexus_repos_pypi_hosted:
+          - name: pypi
         nexus_roles:
-          - id: upload-yum
-            name: upload-yum
-            description: Uploader to yum repository
+          - id: upload-pypi
+            name: upload-pypi
+            description: Uploader to pypi repository
             privileges:
-              - nx-repository-view-yum-yum-add
-              - nx-repository-view-yum-yum-edit
-          - id: download-yum
-            name: download-yum
-            description: Downloader of yum repository
+              - nx-repository-view-pypi-pypi-add
+              - nx-repository-view-pypi-pypi-edit
+          - id: download-pypi
+            name: download-pypi
+            description: Downloader of pypi repository
             privileges:
-              - nx-repository-view-yum-yum-read
+              - nx-repository-view-pypi-pypi-read
         nexus_local_users:
-          - username: upload-yum
+          - username: upload-pypi
             password: Abcd1234!
             first_name: upload
-            last_name: yum
+            last_name: pypi
             email: nobody@example.com
             roles:
-              - upload-yum
+              - upload-pypi
             state: present
-          - username: download-yum
+          - username: download-pypi
             password: Abcd1234!
             first_name: download
-            last_name: yum
+            last_name: pypi
             email: nobody@example.com
             roles:
-              - download-yum
+              - download-pypi
             state: present
 
   tasks:

@@ -1,0 +1,65 @@
+---
+- name: Download pypi packages from internet and upload them to Nexus
+  hosts: acs
+  connection: local
+  vars:
+    pypi_package: requests
+    pypi_download_directory: /home/vagrant/pypi-packages
+  tasks:
+    - name: Create directory for pypi packages
+      ansible.builtin.file:
+        path: "{{ pypi_download_directory }}"
+        mode: "0755"
+        state: directory
+
+    # The target system uses Python 3.6, but Ansible uses Python 3.11.
+    # So to get the proper version, we have to download the package using an explicit version.
+    - name: Download pypi packages
+      ansible.builtin.command:
+        cmd: pip3.6 download {{ pypi_package }} -d {{ pypi_download_directory }}
+        creates: "{{ pypi_download_directory }}/*.whl"
+
+    - name: Update pip, needed to install twine
+      ansible.builtin.pip: # noqa: package-latest
+        name: pip
+        state: latest
+      become: true
+
+    - name: Install twine, needed to upload packages
+      ansible.builtin.pip:
+        name: twine
+      become: true
+
+    - name: Install Grype, a security scanner that supports .whl files
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat /vagrant/files/install-grype.sh | sh -s -- -b /usr/local/bin
+        creates: /usr/local/bin/grype
+      become: true
+      tags: grype
+
+    - name: Find .whl files in {{ pypi_download_directory }}
+      ansible.builtin.find:
+        paths: "{{ pypi_download_directory }}"
+        patterns: "*.whl"
+      register: find_result
+      tags: grype
+
+    - name: Scan each .whl file with Grype
+      ansible.builtin.command:
+        cmd: grype {{ item.path }}
+      changed_when: false
+      loop: "{{ find_result.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+      tags: grype
+
+    - name: Upload pypi packages
+      ansible.builtin.command:
+        cmd: twine upload --skip-existing {{ pypi_download_directory }}/*.whl
+      environment:
+        TWINE_USERNAME: "{{ nexus_upload_pypi_user }}"
+        TWINE_PASSWORD: "{{ nexus_upload_pypi_password }}"
+        TWINE_REPOSITORY_URL: http://{{ nexus_host }}:{{ nexus_port }}/repository/pypi/
+      changed_when: true

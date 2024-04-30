@@ -1,22 +1,17 @@
-# Ansible Nexus yum PoC
+# Nexus private pypi repo PoC
 
 This PoC shows:
 
 - how to build a Nexus server using Ansible
-- how to build a yum package and upload it to Nexus
-- how to install that package using Ansible
+- how to download pypi packages and upload them to Nexus
+- how to install a pypi package from Nexus
 
 ## Requirements
 
 - [VirtualBox](https://www.virtualbox.org/): tested with version 6.1.50
 - [Vagrant](https://www.vagrantup.com/): tested with version 2.4.1
-- A RedHat developers subscription: to get one visit the [RedHat developer site](https://developers.redhat.com/?source=sso) and click on 'Join Red Hat Developer'
 
 ## Usage
-
-### Preparation
-
-Set the environment variables RH_USER and RH_PASS to the credentials of your Red Hat login.
 
 ### Setup
 
@@ -24,30 +19,37 @@ Set the environment variables RH_USER and RH_PASS to the credentials of your Red
 vagrant up
 ```
 
-The registered VMs can be seen in the [Systems page](https://access.redhat.com/management/systems) of your Customer Portal.
-
 ``` bash
 vagrant ssh acs
 cd /vagrant
-ansible-playbook playbook-nexus.yml
+ansible-playbook playbook-nexus.yml -v
 ```
 
-To build and upload the RPM, on the acs run:
+For some reason the pypi repo is created incorrectly. It has created a proxy repo instead of a hosted repo.
+I haven't been able to figure out why, the Ansible code looks correct.
+For now we'll have to fix it manually:
+
+- Point your browser at the [Nexus Repository Manager](http://192.168.7.33:8081) and login with admin/Abcd1234!.
+- Click on the cog on the top ('Server administration').
+- Click on 'Repositories'.
+- Click on the arrow right of 'pypi-all' and remove the repo.
+- Do the same for the pypi repo.
+- Click 'Create repository', select 'pypi (hosted)', name it 'pypi' and click 'Create repository'.
+- Run the playbook 'playbook-nexus.yml' again to fix the privileges.
+
+To download the packages from internet and upload them to Nexus:
 
 ``` bash
-ansible-playbook playbook-package.yml
+ansible-playbook playbook-upload-pypi-packages.yml -v
 ```
 
-When this is successful you can see the package in Nexus: point your browser at the [Nexus Repository Manager](http://192.168.14.34:8081) and
-login with admin/Abcd1234!.
+When this is successful you can see the packages [in the Nexus browser](http://192.168.7.33:8081/#browse/browse:pypi).
 
-The package can be installed on the nexus VM by running on the acs:
+The package can be installed on the nointernet VM by running on the acs:
 
 ``` bash
-ansible-playbook playbook-install-package.yml
+ansible-playbook playbook-nointernet.yml -v
 ```
-
-The results can be found in /opt/poc.
 
 ### Teardown
 
@@ -56,5 +58,3 @@ On the machine where this repo was cloned:
 ``` bash
 vagrant destroy -f
 ```
-
-The VMs will be automatically unregistered.
