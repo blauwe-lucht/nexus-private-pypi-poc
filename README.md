@@ -2,9 +2,9 @@
 
 This PoC shows:
 
-- how to build a Nexus server using Ansible
-- how to download pypi packages and upload them to Nexus
-- how to install a pypi package from Nexus
+- how to build a Nexus server using Ansible,
+- how to download pypi packages, scan them for security issues and upload them to Nexus,
+- how to install a pypi package from Nexus on machine without internet.
 
 ## Requirements
 
@@ -25,7 +25,7 @@ cd /vagrant
 ansible-playbook playbook-nexus.yml -v
 ```
 
-For some reason the pypi repo is created incorrectly. It has created a proxy repo instead of a hosted repo.
+For some reason the Nexus pypi repo is created incorrectly. It has created a proxy repo instead of a hosted repo.
 I haven't been able to figure out why, the Ansible code looks correct.
 For now we'll have to fix it manually:
 

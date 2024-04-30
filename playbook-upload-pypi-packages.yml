@@ -3,7 +3,6 @@
   hosts: acs
   connection: local
   vars:
-    pypi_package: requests
     pypi_download_directory: /home/vagrant/pypi-packages
   tasks:
     - name: Create directory for pypi packages
@@ -13,10 +12,10 @@
         state: directory
 
     # The target system uses Python 3.6, but Ansible uses Python 3.11.
-    # So to get the proper version, we have to download the package using an explicit version.
+    # So to get the proper version, we have to download the package using an explicit pip version.
     - name: Download pypi packages
       ansible.builtin.command:
-        cmd: pip3.6 download {{ pypi_package }} -d {{ pypi_download_directory }}
+        cmd: pip3.6 download requests -d {{ pypi_download_directory }}
         creates: "{{ pypi_download_directory }}/*.whl"
 
     - name: Update pip, needed to install twine
@@ -30,6 +29,7 @@
         name: twine
       become: true
 
+    # install-gryp.sh was downloaded from https://github.com/anchore/grype/blob/main/install.sh
     - name: Install Grype, a security scanner that supports .whl files
       ansible.builtin.shell:
         cmd: |
